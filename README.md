@@ -4,6 +4,14 @@ Take a **real, running production service** — my [serverless-file-share](https
 
 **Status:** ✅ All stages complete — observing the **live** serverless-file-share stack; an induced incident was detected and recovered ([docs/stage5.md](docs/stage5.md)). See the [architecture](docs/architecture.md) and [runbook](docs/runbook.md).
 
+## Screenshots
+
+> The dashboard and alarms live in a private AWS account, so screenshots are how this project is shown. Drop PNGs into [`docs/screenshots/`](docs/screenshots/) (capture guide there) and they render here + in [docs/stage5.md](docs/stage5.md).
+
+| Golden-signals dashboard, mid-incident | `service-health` alarm in ALARM |
+|---|---|
+| ![dashboard mid-incident](docs/screenshots/01-dashboard-incident.png) | ![alarm firing](docs/screenshots/02-alarm-firing.png) |
+
 ## Why this project
 
 Projects that *build* things are common; projects that prove you can *operate* them in production are rare — that's the gap this fills. It's the third of a three-project arc:
@@ -42,14 +50,14 @@ The serverless-file-share stack: **API Gateway → Lambda (issue-url / download 
   Runbook (docs/runbook.md) + failure-injection demo
 ```
 
-## How it works (planned)
+## How it works
 
 1. The live service emits **structured logs**, **custom + built-in metrics**, and **X-Ray traces** (active tracing enabled on the Lambdas + API Gateway).
 2. **CloudWatch** aggregates them into a **golden-signals dashboard** — latency, traffic, errors, saturation — for API Gateway, Lambda, and DynamoDB.
 3. **SLOs** (e.g. 99% availability, a p95-latency target) are tracked with an **error budget**; alarms fire on breach and on golden-signal thresholds.
 4. A **CloudWatch Synthetics canary** probes the live API continuously for outside-in uptime.
 5. Alarms notify via **SNS → email**, and each maps to a step in the **runbook**.
-6. Capstone: **induce a failure** (e.g. revoke the issue-url Lambda's KMS permission so uploads break), watch the dashboard + alarm catch it, follow the runbook, and recover.
+6. Capstone: **induce a failure** (throttle the issue-url Lambda to zero concurrency so uploads return 5xx), watch the dashboard + alarm catch it, follow the runbook, and recover.
 
 ## Services and why
 

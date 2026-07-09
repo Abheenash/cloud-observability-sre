@@ -30,6 +30,11 @@ alarm                    -> OK        (resolved)
 A complete **induce → detect → diagnose → recover** loop against a real production
 service — the thing that separates "I can build it" from "I can operate it."
 
+## Evidence
+
+The dashboard and alarms are private to the AWS account — see [screenshots](screenshots/)
+(dashboard mid-incident, the `service-health` alarm firing, and recovery to OK).
+
 ## What Stage 5 ties together
 
 - **Golden-signals dashboard** (Stage 2) showed *what* broke (throttles, not errors).
