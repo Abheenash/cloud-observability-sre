@@ -76,7 +76,8 @@ resource "aws_synthetics_canary" "uptime" {
   start_canary         = true
 
   schedule {
-    expression = "rate(5 minutes)"
+    # hourly keeps canary cost ~$0.86/mo (5-min would be ~$10/mo) — fine for a hobby app
+    expression = "rate(1 hour)"
   }
 
   run_config {
