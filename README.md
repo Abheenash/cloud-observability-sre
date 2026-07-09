@@ -26,6 +26,8 @@ The service under observation is **already live**, so this is genuine "run what 
 
 The serverless-file-share stack: **API Gateway → Lambda (issue-url / download / reaper) → S3 + DynamoDB**, encrypted with KMS.
 
+Plus the **domain and portfolio site** (`abheenash.com`) — real-user monitoring (visitors, page views, web-vitals, JS errors, link clicks) via **CloudWatch RUM**, and edge traffic via **CloudFront** metrics. See [docs/web-monitoring.md](docs/web-monitoring.md).
+
 ## Target architecture
 
 ```

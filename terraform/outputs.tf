@@ -13,3 +13,12 @@ output "service_health_alarm" {
 output "canary_name" {
   value = aws_synthetics_canary.uptime.name
 }
+
+output "rum_app_monitor_id" {
+  description = "App monitor UUID — goes in the RUM web snippet."
+  value       = aws_rum_app_monitor.portfolio.app_monitor_id
+}
+
+output "rum_identity_pool_id" {
+  value = aws_cognito_identity_pool.rum.id
+}

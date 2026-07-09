@@ -102,6 +102,32 @@ resource "aws_cloudwatch_dashboard" "main" {
           yAxis       = { left = { min = 90, max = 100 } },
           annotations = { horizontal = [{ label = "SLO", value = var.slo_availability_pct }] }
         }
+      },
+
+      # ---------- Domain / web traffic (CloudFront) ----------
+      {
+        type       = "text", x = 0, y = 25, width = 24, height = 1,
+        properties = { markdown = "## Domain / web traffic — CloudFront (portfolio + app) · real-user detail in CloudWatch RUM" }
+      },
+      {
+        type = "metric", x = 0, y = 26, width = 12, height = 6,
+        properties = {
+          title = "CloudFront — Requests", region = "us-east-1", period = 300, stat = "Sum", view = "timeSeries",
+          metrics = [
+            ["AWS/CloudFront", "Requests", "DistributionId", var.portfolio_distribution_id, "Region", "Global", { label = "abheenash.com" }],
+            ["AWS/CloudFront", "Requests", "DistributionId", var.app_distribution_id, "Region", "Global", { label = "share.abheenash.com" }]
+          ]
+        }
+      },
+      {
+        type = "metric", x = 12, y = 26, width = 12, height = 6,
+        properties = {
+          title = "CloudFront — Error rate %", region = "us-east-1", period = 300, stat = "Average", view = "timeSeries",
+          metrics = [
+            ["AWS/CloudFront", "4xxErrorRate", "DistributionId", var.portfolio_distribution_id, "Region", "Global", { label = "portfolio 4xx" }],
+            ["AWS/CloudFront", "5xxErrorRate", "DistributionId", var.portfolio_distribution_id, "Region", "Global", { label = "portfolio 5xx" }]
+          ]
+        }
       }
     ]
   })

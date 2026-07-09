@@ -44,6 +44,30 @@ variable "alarm_email" {
   default     = ""
 }
 
+# --- web / domain monitoring (RUM + CloudFront) ---
+
+variable "portfolio_domain" {
+  type    = string
+  default = "abheenash.com"
+}
+
+variable "rum_monitor_name" {
+  type    = string
+  default = "abheenash-portfolio"
+}
+
+variable "portfolio_distribution_id" {
+  description = "CloudFront distribution serving abheenash.com."
+  type        = string
+  default     = "E2HDMOM0Q7SCE6"
+}
+
+variable "app_distribution_id" {
+  description = "CloudFront distribution serving share.abheenash.com."
+  type        = string
+  default     = "E3KEQ53OO7U9AA"
+}
+
 # --- SLO targets ---
 
 variable "slo_availability_pct" {
