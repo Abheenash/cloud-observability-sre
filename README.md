@@ -2,7 +2,7 @@
 
 Take a **real, running production service** — my [serverless-file-share](https://github.com/Abheenash/serverless-file-share) app (live at `share.abheenash.com`) — and make it **observable and operable**: golden-signal dashboards, distributed tracing, SLOs with error budgets, automated alerting, and a documented incident-response runbook — capped by a demo that induces a real failure, catches it, and recovers.
 
-**Status:** 🚧 Building in public — **Stage 0 (setup)**. The roadmap below is the plan; boxes get checked only as each stage actually lands.
+**Status:** ✅ All stages complete — observing the **live** serverless-file-share stack; an induced incident was detected and recovered ([docs/stage5.md](docs/stage5.md)). See the [architecture](docs/architecture.md) and [runbook](docs/runbook.md).
 
 ## Why this project
 
@@ -65,12 +65,14 @@ The serverless-file-share stack: **API Gateway → Lambda (issue-url / download 
 
 ## Roadmap
 
-- [ ] **Stage 0** — Repo, reuse account hygiene + OIDC role, budget alarm; target = the live serverless-file-share stack
-- [ ] **Stage 1** — Structured logging + CloudWatch Logs Insights queries over the Lambda logs
-- [ ] **Stage 2** — Custom metrics + a **golden-signals dashboard** (API Gateway / Lambda / DynamoDB)
-- [ ] **Stage 3** — **X-Ray** tracing across the request path; find and document a bottleneck
-- [ ] **Stage 4** — **SLOs + error budget**, alarms → SNS, and a **synthetics canary**
-- [ ] **Stage 5** — **Incident-response runbook** + a **failure-injection demo** (induce → alarm → runbook → recover); README + dashboard evidence
+- [x] **Stage 0** — Repo, reuse account hygiene + OIDC role, budget alarm; target = the live serverless-file-share stack
+- [x] **Stage 1** — [Structured logging + CloudWatch Logs Insights queries](docs/stage1.md) over the Lambda logs
+- [x] **Stage 2** — [Golden-signals dashboard](docs/stage2.md) (API Gateway / Lambda / DynamoDB) + SLO widget
+- [x] **Stage 3** — [X-Ray tracing](docs/stage3.md) across the request path
+- [x] **Stage 4** — [SLOs + alarms → SNS + a synthetics canary](docs/stage4.md)
+- [x] **Stage 5** — [Incident-response runbook + a failure-injection drill](docs/stage5.md) (induce → alarm → runbook → recover)
+
+**Future scope:** JSON logging, SLO burn-rate alerts, AWS FIS GameDays, anomaly detection, Slack/PagerDuty — see [docs/future-scope.md](docs/future-scope.md).
 
 The headline evidence: **the dashboard mid-incident** — a metric spiking and the alarm red — then recovery.
 

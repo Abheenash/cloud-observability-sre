@@ -4,3 +4,4 @@
 *.tfstate.*
 __pycache__/
 .env
+terraform/build/
