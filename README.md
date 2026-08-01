@@ -57,7 +57,7 @@ Plus the **domain and portfolio site** (`abheenash.com`) — real-user monitorin
 1. The live service emits **structured logs**, **custom + built-in metrics**, and **X-Ray traces** (active tracing enabled on the Lambdas + API Gateway).
 2. **CloudWatch** aggregates them into a **golden-signals dashboard** — latency, traffic, errors, saturation — for API Gateway, Lambda, and DynamoDB.
 3. **SLOs** (e.g. 99% availability, a p95-latency target) are tracked with an **error budget**; alarms fire on breach and on golden-signal thresholds.
-4. A **CloudWatch Synthetics canary** probes the live API continuously for outside-in uptime.
+4. A **CloudWatch Synthetics canary** (`terraform/canary.tf`) gives outside-in uptime by loading the live app and asserting a 2xx — independent of the service's own metrics. It is the one component with a real recurring cost, so it is run **build → prove → destroy**: `terraform apply` stands it up on demand for a demo, then it is torn down (see [Cost](#cost)).
 5. Alarms notify via **SNS → email**, and each maps to a step in the **runbook**.
 6. Capstone: **induce a failure** (throttle the issue-url Lambda to zero concurrency so uploads return 5xx), watch the dashboard + alarm catch it, follow the runbook, and recover.
 
@@ -68,7 +68,7 @@ Plus the **domain and portfolio site** (`abheenash.com`) — real-user monitorin
 | CloudWatch (Logs, Metrics, Dashboards, Alarms) | Core observability + alerting |
 | CloudWatch Logs Insights | Query structured Lambda logs |
 | X-Ray | Distributed tracing across API Gateway → Lambda → DynamoDB |
-| CloudWatch Synthetics | Outside-in uptime canary against the live API |
+| CloudWatch Synthetics | Outside-in uptime canary against the live API (IaC; run on-demand for cost) |
 | SNS | Alarm notifications (email) |
 | Terraform | All observability infrastructure as code |
 | GitHub Actions (OIDC) | CI, keyless — same pattern as the prior projects |
@@ -88,7 +88,7 @@ The headline evidence: **the dashboard mid-incident** — a metric spiking and t
 
 ## Cost
 
-Mostly free tier: CloudWatch metrics/logs/dashboards, X-Ray, and SNS all have generous free tiers; the observed service is already running at ~$0. **Synthetics canaries** cost a little per run — keep the frequency low. A budget alarm guards the account.
+Mostly free tier: CloudWatch metrics/logs/dashboards, X-Ray, and SNS all have generous free tiers, and the observed service already runs at ~$0. The one exception is the **Synthetics canary**, which bills per run (~$0.86/mo hourly). To keep the whole observability layer at $0 at rest, the canary follows a **build → prove → destroy** loop — the same cost-controlled model as [aws-eks-platform](https://github.com/Abheenash/aws-eks-platform): `terraform apply` stands it up on demand for a demo, then it is torn down again. It is currently torn down; the dashboard, alarms, X-Ray, and RUM stay live. A budget alarm guards the account.
 
 ---
 
