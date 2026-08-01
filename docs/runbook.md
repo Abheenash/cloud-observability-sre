@@ -34,5 +34,25 @@ Every alarm maps to a first diagnostic step and a remediation. Alarms notify
 - **Latency:** p95 < 1500 ms.
 - When the error budget is being burned, freeze risky changes until it recovers.
 
+## Operating the Synthetics canary (on-demand)
+The `sfs-uptime` canary is the one component with a real recurring cost (~$0.86/mo hourly), so it is run **build → prove → destroy** rather than left running: provisioned as Terraform, stood up on demand for a demo, then torn down so the observability layer sits at $0 at rest. The rest of the layer (dashboard, alarms, X-Ray, RUM) stays live. Its `terraform/canary.tf` config is intact, so it is always one command away.
+
+**Before a demo — stand it up** (from `terraform/`; the `-target` pulls in the bucket + IAM role it depends on):
+```
+terraform apply -target=aws_synthetics_canary.uptime
+```
+`start_canary = true`, so it begins probing `share.abheenash.com` hourly immediately. Allow one run (or trigger `aws synthetics start-canary --name sfs-uptime`) before expecting the uptime widget to populate.
+
+**After the demo — tear it back down** (the bucket is `force_destroy = true`, so its artifacts are removed automatically):
+```
+terraform destroy \
+  -target=aws_synthetics_canary.uptime \
+  -target=aws_iam_role_policy.canary \
+  -target=aws_iam_role.canary \
+  -target=aws_s3_bucket_public_access_block.canary \
+  -target=aws_s3_bucket.canary
+```
+This leaves every other observed signal untouched. Verify with `aws synthetics describe-canaries --query 'Canaries[].Name'` (should not list `sfs-uptime`).
+
 ## Verified failure-injection drill
 See [stage5.md](stage5.md): throttling `sfs-issue-url` to zero concurrency induces API 5xx → the alarm fires → restoring concurrency recovers the service. This runbook's "Throttling" path is the one that resolves it.
