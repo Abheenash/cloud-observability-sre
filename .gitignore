@@ -1,7 +1,9 @@
-.DS_Store
-.terraform/
 *.tfstate
 *.tfstate.*
-__pycache__/
+.DS_Store
 .env
+.terraform/
+__pycache__/
+terraform/*.backup
+terraform/*.bak
 terraform/build/

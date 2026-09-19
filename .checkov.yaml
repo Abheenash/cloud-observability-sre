@@ -1,0 +1,25 @@
+# Reviewed baseline — every skip has a reason; anything not listed still fails CI.
+directory:
+  - terraform
+framework:
+  - terraform
+skip-check:
+  - CKV_AWS_26   # SNS topic encryption: alarm notifications carry alarm names, not data; kept unencrypted to stay on the free tier path
+  - CKV_AWS_144  # S3 cross-region replication for the canary artifact bucket: throwaway screenshots/logs
+  - CKV_AWS_145  # S3 KMS for canary artifacts: same
+  - CKV_AWS_18   # S3 access logging for canary artifacts: same
+  - CKV_AWS_21   # S3 versioning for canary artifacts: same
+  - CKV2_AWS_62  # S3 event notifications: n/a
+  - CKV2_AWS_61  # S3 lifecycle: canary bucket is force_destroy and torn down with the canary
+  - CKV_AWS_338  # log retention >= 1 year: 14/30 days is deliberate for canary logs
+  - CKV_AWS_158  # KMS on log groups: canary logs contain URLs and status codes only
+  - CKV_AWS_50   # X-Ray on the canary Lambda: the canary is a probe, not a traced service
+  - CKV_AWS_116  # DLQ on the canary Lambda: Synthetics owns the invocation
+  - CKV_AWS_117  # canary Lambda in a VPC: it must reach the public internet
+  - CKV_AWS_173  # KMS on canary env vars: no secrets
+  - CKV_AWS_272  # code signing: single-owner repo
+  - CKV_AWS_115  # reserved concurrency: account is at the 10-unreserved minimum quota
+  - CKV_AWS_356  # logs:CreateLogDelivery / PutResourcePolicy on "*": these log-delivery APIs do not support resource-level permissions
+  - CKV_AWS_355  # same
+  - CKV_AWS_111  # same (write access without constraint = the log-delivery APIs above)
+  - CKV_AWS_366  # Cognito unauthenticated guests: that IS the RUM design — anonymous browsers must be able to send rum:PutRumEvents to one monitor and nothing else

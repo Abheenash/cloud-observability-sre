@@ -12,6 +12,20 @@ Take a **real, running production service** — my [serverless-file-share](https
 |---|---|
 | ![dashboard mid-incident](docs/screenshots/01-dashboard-incident.png) | ![alarm firing](docs/screenshots/02-alarm-firing.png) |
 
+## v2 (Sep 2026) — the roadmap items, built and measured
+
+| Item | What shipped | Evidence |
+| --- | --- | --- |
+| **Multi-window, multi-burn-rate SLO alerts** (`terraform/burn_rate.tf`) | Four metric-math error-ratio alarms (1 h / 5 m at 14.4× budget, 6 h / 30 m at 6×) combined into **`slo-burn-fast`** (page) and **`slo-burn-slow`** (ticket). The short window confirms the burn is still happening, so a page never fires for an incident that already ended. | live in the account alongside the Stage-4 alarms |
+| **Anomaly detection** (`terraform/anomaly.tf`) | p95 latency outside a learned 2-σ band, and a **traffic-drop** alarm for "the front door is down but nothing is erroring". | live |
+| **AWS Fault Injection Service GameDay** (`terraform/fis.tf`, `fis/throttle-lambda.yaml`) | The Stage-5 drill as an FIS experiment: an SSM Automation runbook throttles `sfs-issue-url` to 0 for a window, with `onFailure`/`onCancel` both wired to *restore*. The experiment's **stop condition is the composite service-health alarm** — detection aborts the experiment, which restores production. One run answers "does the alarm catch it?" and "how fast?", and cannot leave the service throttled. IAM: the automation role can change concurrency on the three observed functions and nothing else. | template `EXTBHv4TnhPwLECcG` |
+| **Automated, measured drill** (`scripts/drill.sh`) | Throttles, generates real traffic, polls the alarm every 5 s, restores from a `trap` (Ctrl-C can't leave it throttled), and writes a report. | [`docs/drills/`](docs/drills/) |
+| **CI** | `terraform fmt`/`validate`, checkov against a reviewed baseline, the SSM runbook's safety invariants asserted (every step falls through to *restore*), `bash -n` on the drill. | badge above |
+
+**Measured drill, 2026-09-19** ([report](docs/drills/)): induce → `service-health` **ALARM in 105 s** (the 5xx alarm evaluates a 300 s period, so detection lands between ~60 s and ~5 min depending on where in the window the failure starts — the Stage-5 write-up's "~60 s" was the lucky end of that range); restore → OK in 297 s (one clean period). Probe: HTTP 503 during, 201 after.
+
+Still designs: structured JSON logging lives in the observed service's repo; Slack/PagerDuty routing and Managed Grafana remain on the list.
+
 ## Why this project
 
 Projects that *build* things are common; projects that prove you can *operate* them in production are rare — that's the gap this fills. It's the third of a three-project arc:

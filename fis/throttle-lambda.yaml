@@ -1,0 +1,37 @@
+# SSM Automation runbook run by the FIS experiment: throttle a Lambda to zero
+# concurrency for a fixed window, then restore it — with the restore also wired to
+# onFailure and onCancel, so an aborted experiment can never leave the function dead.
+description: Throttle a Lambda function to 0 reserved concurrency for DurationSeconds, then restore.
+schemaVersion: "0.3"
+assumeRole: "{{ AutomationAssumeRole }}"
+parameters:
+  FunctionName:
+    type: String
+  DurationSeconds:
+    type: String
+    default: "300"
+  AutomationAssumeRole:
+    type: String
+mainSteps:
+  - name: throttle
+    action: aws:executeAwsApi
+    onFailure: step:restore
+    onCancel: step:restore
+    inputs:
+      Service: lambda
+      Api: PutFunctionConcurrency
+      FunctionName: "{{ FunctionName }}"
+      ReservedConcurrentExecutions: 0
+  - name: hold
+    action: aws:sleep
+    onFailure: step:restore
+    onCancel: step:restore
+    inputs:
+      Duration: "PT{{ DurationSeconds }}S"
+  - name: restore
+    action: aws:executeAwsApi
+    isEnd: true
+    inputs:
+      Service: lambda
+      Api: DeleteFunctionConcurrency
+      FunctionName: "{{ FunctionName }}"
