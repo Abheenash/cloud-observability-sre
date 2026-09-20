@@ -1,5 +1,7 @@
 # Cloud Observability & Incident Response — operating a live serverless service on AWS
 
+> **Sep 2026:** multi-window burn-rate SLO alarms, anomaly-detection alarms, an AWS FIS GameDay experiment with the health alarm as its stop condition, an automated drill measured at 105 s detection, CI.
+
 Take a **real, running production service** — my [serverless-file-share](https://github.com/Abheenash/serverless-file-share) app (live at `share.abheenash.com`) — and make it **observable and operable**: golden-signal dashboards, distributed tracing, SLOs with error budgets, automated alerting, and a documented incident-response runbook — capped by a demo that induces a real failure, catches it, and recovers.
 
 **Status:** ✅ All stages complete — observing the **live** serverless-file-share stack; an induced incident was detected and recovered ([docs/stage5.md](docs/stage5.md)). See the [architecture](docs/architecture.md) and [runbook](docs/runbook.md).
