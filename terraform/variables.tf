@@ -16,11 +16,6 @@ variable "api_id" {
   default     = "xpvv2dhvnb"
 }
 
-variable "api_name" {
-  type    = string
-  default = "sfs-api"
-}
-
 variable "lambda_functions" {
   description = "The observed Lambda function names."
   type        = list(string)
