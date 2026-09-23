@@ -76,11 +76,46 @@ resource "aws_iam_role_policy" "splunk_forwarder" {
 # A customer-managed key rather than the AWS-managed SSM key: the HEC token is a
 # bearer credential for the log index, and a CMK lets its access be revoked
 # independently of the parameter's own IAM.
+# An explicit key policy. KMS's default grants the account root full control and
+# nothing else — workable, but it leaves the key's permissions entirely in IAM
+# with no statement on the key itself. Spelling it out makes "who can decrypt the
+# HEC token?" a question this file answers.
+data "aws_iam_policy_document" "splunk_key" {
+  count = local.splunk_enabled ? 1 : 0
+
+  statement {
+    sid       = "EnableIAMUserPermissions"
+    actions   = ["kms:*"]
+    resources = ["*"]
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+  }
+
+  statement {
+    sid       = "AllowSSMToUseTheKey"
+    effect    = "Allow"
+    actions   = ["kms:Decrypt", "kms:GenerateDataKey", "kms:DescribeKey"]
+    resources = ["*"]
+    principals {
+      type        = "AWS"
+      identifiers = [aws_iam_role.splunk_forwarder[0].arn]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "kms:ViaService"
+      values   = ["ssm.${var.region}.amazonaws.com"]
+    }
+  }
+}
+
 resource "aws_kms_key" "splunk" {
   count                   = local.splunk_enabled ? 1 : 0
   description             = "Encrypts the Splunk HEC token"
   enable_key_rotation     = true
   deletion_window_in_days = 30
+  policy                  = data.aws_iam_policy_document.splunk_key[0].json
 }
 
 resource "aws_kms_alias" "splunk" {

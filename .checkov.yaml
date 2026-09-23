@@ -23,3 +23,11 @@ skip-check:
   - CKV_AWS_355  # same
   - CKV_AWS_111  # same (write access without constraint = the log-delivery APIs above)
   - CKV_AWS_366  # Cognito unauthenticated guests: that IS the RUM design — anonymous browsers must be able to send rum:PutRumEvents to one monitor and nothing else
+
+  # CKV_AWS_109 fires on the KMS key policy's root statement:
+  #     actions = ["kms:*"], principals = account root
+  # That statement is AWS's own documented requirement. Their KMS guidance is
+  # explicit that removing it can make the key unmanageable, because it is what
+  # allows IAM policies to grant access to the key at all. Narrowing it trades a
+  # scanner tick for a real lockout risk.
+  - CKV_AWS_109
