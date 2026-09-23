@@ -104,3 +104,28 @@ variable "splunk_index" {
   type    = string
   default = "main"
 }
+
+variable "datadog_api_key" {
+  description = "Empty (the default) disables every Datadog resource. There is no Datadog org behind this account."
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "datadog_app_key" {
+  type      = string
+  default   = ""
+  sensitive = true
+}
+
+variable "datadog_site" {
+  description = "datadoghq.com, datadoghq.eu, ddog-gov.com — the wrong site is a confusing 403."
+  type        = string
+  default     = "datadoghq.com"
+}
+
+variable "datadog_notify" {
+  description = "Datadog notification handle, e.g. slack-oncall or an email."
+  type        = string
+  default     = "abheenash007@gmail.com"
+}

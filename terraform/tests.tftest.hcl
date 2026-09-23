@@ -1,3 +1,5 @@
+mock_provider "datadog" {}
+
 mock_provider "aws" {
   # The mock generates a random account id, which the provider then rejects as an
   # invalid ARN component. A real-shaped one lets the ARN assertions run.
@@ -135,5 +137,59 @@ run "enabled_forwarder_filters_to_the_apps_own_log_lines" {
   assert {
     condition     = aws_ssm_parameter.splunk_hec_token[0].type == "SecureString"
     error_message = "The HEC token must be a SecureString, never a plain parameter or an env var."
+  }
+}
+
+run "datadog_is_off_by_default" {
+  command = plan
+
+  # There is no Datadog org behind this account. Monitors pointing at one that
+  # does not exist would simply fail to create.
+  assert {
+    condition     = length(datadog_monitor.error_rate) == 0 && length(datadog_dashboard.golden_signals) == 0
+    error_message = "With datadog_api_key empty, no Datadog resources may be created."
+  }
+}
+
+run "datadog_monitors_treat_missing_data_the_same_way_the_cloudwatch_alarms_do" {
+  command = plan
+
+  variables {
+    datadog_api_key = "0123456789abcdef0123456789abcdef"
+    datadog_app_key = "0123456789abcdef0123456789abcdef01234567"
+  }
+
+  # The error-ratio monitor must NOT alert on no-data: no requests means no
+  # errors, which is a quiet night. This is the same reasoning as notBreaching
+  # on the CloudWatch error alarms, and it is only safe because of the
+  # traffic-drop monitor below.
+  assert {
+    condition     = !datadog_monitor.error_rate[0].notify_no_data
+    error_message = "The error-ratio monitor must not page on missing data — a quiet night is not an outage."
+  }
+
+  # The traffic monitor is the compensating control, and it is the ONE that must
+  # fire on silence: an API emitting no metrics at all is exactly what the
+  # error-ratio monitor cannot see.
+  assert {
+    condition     = datadog_monitor.traffic_drop[0].notify_no_data
+    error_message = "The traffic-drop monitor MUST alert on no-data — it is the only thing watching for silence."
+  }
+}
+
+run "the_slo_target_matches_the_cloudwatch_burn_rate_alarms" {
+  command = plan
+
+  variables {
+    datadog_api_key = "0123456789abcdef0123456789abcdef"
+    datadog_app_key = "0123456789abcdef0123456789abcdef01234567"
+  }
+
+  # burn_rate.tf computes budget against a 99.5% availability SLO. If these two
+  # disagree, the same incident pages on one backend and not the other — which is
+  # worse than having only one.
+  assert {
+    condition     = datadog_service_level_objective.availability[0].thresholds[0].target == 99.5
+    error_message = "The Datadog SLO target must match the 99.5% the CloudWatch burn-rate alarms are computed against."
   }
 }
