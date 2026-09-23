@@ -1,4 +1,18 @@
 mock_provider "aws" {
+  # The mock generates a random account id, which the provider then rejects as an
+  # invalid ARN component. A real-shaped one lets the ARN assertions run.
+  override_data {
+    target = data.aws_caller_identity.current
+    values = { account_id = "111122223333" }
+  }
+  override_data {
+    target = data.aws_iam_policy_document.splunk_assume
+    values = { json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}" }
+  }
+  override_data {
+    target = data.aws_iam_policy_document.splunk_forwarder[0]
+    values = { json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}" }
+  }
   # Mocked data sources return placeholder strings that the AWS provider then
   # rejects as invalid JSON; a minimal valid document keeps the mock usable.
   override_data {
@@ -67,5 +81,59 @@ run "silence_is_caught_by_a_traffic_alarm_not_by_the_error_alarms" {
   assert {
     condition     = length(aws_cloudwatch_metric_alarm.traffic_anomaly.alarm_actions) > 0
     error_message = "The traffic-drop alarm must notify — it is the compensating control that makes notBreaching safe on the error alarms."
+  }
+}
+
+run "splunk_forwarding_is_off_by_default" {
+  command = plan
+
+  # There is no Splunk in this account. A forwarder pointing nowhere would retry,
+  # fail, and fill a DLQ — so the default must create nothing at all.
+  assert {
+    condition     = length(aws_lambda_function.splunk_forwarder) == 0
+    error_message = "With splunk_hec_url empty, the forwarder must not be created."
+  }
+
+  assert {
+    condition     = length(aws_cloudwatch_log_subscription_filter.to_splunk) == 0
+    error_message = "No subscription filters without a destination to send to."
+  }
+}
+
+run "rejects_a_plaintext_hec_endpoint" {
+  command = plan
+
+  variables {
+    splunk_hec_url = "http://splunk.example.invalid/services/collector"
+  }
+
+  # The HEC token is a bearer credential; over http it is on the wire in clear.
+  expect_failures = [var.splunk_hec_url]
+}
+
+run "enabled_forwarder_filters_to_the_apps_own_log_lines" {
+  command = plan
+
+  variables {
+    splunk_hec_url = "https://http-inputs-example.splunkcloud.com/services/collector"
+  }
+
+  assert {
+    condition     = length(aws_lambda_function.splunk_forwarder) == 1
+    error_message = "A configured endpoint must create the forwarder."
+  }
+
+  # An empty filter_pattern ships START/END/REPORT for every invocation too —
+  # roughly triple the volume, and Splunk is licensed per GB ingested per day.
+  assert {
+    condition = alltrue([
+      for f in aws_cloudwatch_log_subscription_filter.to_splunk : f.filter_pattern != ""
+    ])
+    error_message = "Subscription filters must narrow to the app's structured lines, not ship every Lambda REPORT line."
+  }
+
+  assert {
+    condition     = aws_ssm_parameter.splunk_hec_token[0].type == "SecureString"
+    error_message = "The HEC token must be a SecureString, never a plain parameter or an env var."
   }
 }

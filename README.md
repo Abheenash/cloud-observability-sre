@@ -1,5 +1,7 @@
 # Cloud Observability & Incident Response — operating a live serverless service on AWS
 
+> **Sep 2026 (v4):** **Splunk HEC forwarding** — a CloudWatch Logs subscription filter into a Lambda that speaks HEC, with the four things that silently break one (ms vs s timestamps, JSON array vs concatenated objects, CONTROL_MESSAGE forwarded as data, a plaintext endpoint leaking the bearer token) each pinned by a test. Off by default; 9 unit tests, 5 terraform tests.
+>
 > **Sep 2026 (v3):** README now leads with the **measured drill** (105 s detection, 297 s recovery) instead of two screenshots that were never captured; AWS provider 5 → **6**; Renovate + pre-commit + tflint.
 >
 > **Sep 2026:** multi-window burn-rate SLO alarms, anomaly-detection alarms, an AWS FIS GameDay experiment with the health alarm as its stop condition, an automated drill measured at 105 s detection, CI.

@@ -76,3 +76,31 @@ variable "slo_p95_latency_ms" {
   type        = number
   default     = 1500
 }
+
+variable "splunk_hec_url" {
+  description = <<-EOT
+    Splunk HTTP Event Collector endpoint, e.g.
+    https://http-inputs-<stack>.splunkcloud.com/services/collector.
+    Empty (the default) disables the whole forwarder — there is no Splunk in this
+    account, and a forwarder pointing nowhere just fills a DLQ.
+  EOT
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = var.splunk_hec_url == "" || startswith(var.splunk_hec_url, "https://")
+    error_message = "The HEC endpoint must be https — the token is a bearer credential."
+  }
+}
+
+variable "splunk_hec_token" {
+  description = "Placeholder only. The real token is set out of band; see splunk.tf."
+  type        = string
+  default     = "set-me-out-of-band"
+  sensitive   = true
+}
+
+variable "splunk_index" {
+  type    = string
+  default = "main"
+}
