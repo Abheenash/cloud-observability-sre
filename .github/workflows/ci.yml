@@ -4,7 +4,7 @@ jobs:
   terraform:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: hashicorp/setup-terraform@v3
       - run: terraform -chdir=terraform fmt -check -diff
       - run: terraform -chdir=terraform init -backend=false
@@ -17,7 +17,7 @@ jobs:
   runbook:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: SSM automation document is valid YAML with the required steps
         run: |
           python3 - <<'EOF'
