@@ -32,6 +32,31 @@ jobs:
           print("runbook ok")
           EOF
       - run: bash -n scripts/drill.sh
+      # The canary handler lives at nodejs/node_modules/apiCanary.js because
+      # CloudWatch Synthetics mandates that layout -- it is a hand-written file,
+      # not vendored npm deps. That path is a magnet for "clean up node_modules"
+      # tooling, and it has already been deleted once. `terraform validate` does
+      # not catch it: archive_file happily zips an empty directory, so the canary
+      # deploys and fails at runtime with a missing handler. Assert it is here and
+      # exports the handler canary.tf names.
+      - name: Synthetics canary handler is present and exports its handler
+        run: |
+          python3 - <<'EOF'
+          import pathlib, re, sys
+          p = pathlib.Path("canary/nodejs/node_modules/apiCanary.js")
+          if not p.is_file():
+              sys.exit(f"missing {p} -- Synthetics requires this exact path; see canary/README.md")
+          src = p.read_text()
+          if not re.search(r"exports\.handler\s*=", src):
+              sys.exit(f"{p} does not export `handler`, but terraform/canary.tf sets handler = apiCanary.handler")
+          tf = pathlib.Path("terraform/canary.tf").read_text()
+          m = re.search(r'handler\s*=\s*"([^".]+)\.handler"', tf)
+          if not m:
+              sys.exit("could not read the handler name out of terraform/canary.tf")
+          if m.group(1) != p.stem:
+              sys.exit(f"canary.tf expects {m.group(1)}.js but the file on disk is {p.name}")
+          print(f"canary handler ok: {p} -> {m.group(1)}.handler")
+          EOF
 
   # tflint catches what `terraform validate` cannot: unused declarations, missing
   # provider version constraints, invalid instance types. It found an unpinned

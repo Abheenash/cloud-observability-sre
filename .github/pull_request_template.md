@@ -18,7 +18,8 @@ These run automatically; they are listed so a reviewer can tell at a glance what
 and is not covered by the green tick:
 
 - [ ] `terraform`
-- [ ] `runbook`
+- [ ] `runbook` (SSM document safety invariants + the Synthetics canary handler)
+- [ ] `pytest (Splunk forwarder)`
 - [ ] `tflint`
 - [ ] `terraform test`
 - [ ] `ruff`
